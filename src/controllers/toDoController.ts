@@ -8,21 +8,22 @@ const toDoSchema = z.object({
   description: z.string(),
   tags: z.array(z.string().nullable())
 });
-const IdSchema = z.string().uuid();
+const IdSchema = z.number();
 const prisma = new PrismaClient();
 
 export const getToDos = async (req: RequestWithUser, res: Response) => {
+  const userId = parseInt(req.user!.id); 
   try {
-    const toDos = await prisma.toDo.findMany({
+    const toDos = await prisma.todos.findMany({
       where: {
-        userId: req.user!.id,
+        userId
       },
       include: {
-        tags: { include: { tag: { select: { name: true } } } }
+        tagsontodos: { include: { tags: { select: { name: true } } } }
       }
     });
     const result = toDos.map((toDo) => {
-      return { ...toDo, tags: toDo.tags.map(tag => tag.tag) }
+      return { ...toDo, tags: toDo.tagsontodos.map(tag => tag.tags) }
     })
     res.status(200).json(result);
   } catch (err: any) {
@@ -30,8 +31,9 @@ export const getToDos = async (req: RequestWithUser, res: Response) => {
   }
 };
 
-export const createToDo = async (req: RequestWithUser, res: Response) => {
+export const createToDo = async (req: RequestWithUser, res: Response) => {  
   try {
+    const userId = parseInt(req.user!.id); 
     let { title, description, tags } = req.body
     if (tags == undefined) {
       tags = [];
@@ -50,9 +52,9 @@ export const createToDo = async (req: RequestWithUser, res: Response) => {
     })
 
     // Check user tags in database
-    const userTags = await prisma.tag.findMany({
+    const userTags = await prisma.tags.findMany({
       where: {
-        userId: req.user!.id,
+        userId,
         OR: tagIdList
       }
     });
@@ -61,12 +63,12 @@ export const createToDo = async (req: RequestWithUser, res: Response) => {
       return res.status(400).json({ message: "User don't have selected tag(s)" });
     }
 
-    await prisma.toDo.create({
+    await prisma.todos.create({
       data: {
-        userId: req.user!.id,
+        userId,
         title: title,
         description: description,
-        tags: {
+        tagsontodos: {
           create: tags.map((tagId: string) => {
             return {
               tag: {
@@ -109,9 +111,9 @@ export const editToDo = async (req: RequestWithUser, res: Response) => {
     });
 
     // Check user tags in database
-    const userTags = await prisma.tag.findMany({
+    const userTags = await prisma.tags.findMany({
       where: {
-        userId: req.user!.id,
+        userId: parseInt(req.user!.id),
         OR: tagIdList
       }
     });
@@ -120,14 +122,14 @@ export const editToDo = async (req: RequestWithUser, res: Response) => {
       return res.status(400).json({ message: "User don't have selected tag(s)" });
     }
 
-    await prisma.toDo.update({
+    await prisma.todos.update({
       where: {
-        id: req.params.toDoId,
+        id: parseInt(req.params.toDoId),
       },
       data: {
         title: title,
         description: description,
-        tags: {
+        tagsontodos: {
           deleteMany: {},
           create: tags.map((tagId: string) => {
             return {
@@ -162,12 +164,13 @@ export const editToDo = async (req: RequestWithUser, res: Response) => {
 export const deleteToDo = async (req: RequestWithUser, res: Response) => {
   try {
     IdSchema.parse(req.params.id);
+    const userId = parseInt(req.user!.id);
 
     // Check to do's user id and request user id
-    const userToDo = await prisma.toDo.findFirst({
+    const userToDo = await prisma.todos.findFirst({
       where: {
-        id: req.params.toDoId,
-        userId: req.user!.id
+        id: parseInt(req.params.toDoId),
+        userId
       },
       select: {
         id: true,
@@ -180,14 +183,14 @@ export const deleteToDo = async (req: RequestWithUser, res: Response) => {
     }
 
     // Delete to do from relation table
-    await prisma.tagsOnToDos.deleteMany({
+    await prisma.tagsontodos.deleteMany({
       where: {
-        toDoId: req.params.toDoId
+        toDoId: parseInt(req.params.toDoId)
       }
     })
-    await prisma.toDo.delete({
+    await prisma.todos.delete({
       where: {
-        id: req.params.toDoId,
+        id: parseInt(req.params.toDoId),
       },
     });
 

@@ -1,56 +1,53 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  name      String
-  username  String   @unique
-  email     String   @unique
-  address   String
-  phone     String
-  password  String
-  ToDo      ToDo[]
-  Tag       Tag[]
+model tags {
+  id          Int           @id @default(autoincrement())
+  userId      Int
+  name        String        @db.VarChar(255)
+  createdAt   DateTime      @default(now()) @db.DateTime(0)
+  updatedAt   DateTime      @default(now()) @db.DateTime(0)
+  users       users         @relation(fields: [id], references: [id], onDelete: Cascade, map: "tags_user_foreign")
+  tagsontodos tagsontodos[]
 }
 
-model ToDo {
-  id          String        @id @default(uuid())
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  title       String
-  description String?
-  userId      String
-  user        User          @relation(fields: [userId], references: [id])
-  tags        TagsOnToDos[]
+model tagsontodos {
+  toDoId     Int
+  tagsId     Int
+  assignedAt DateTime @default(now()) @db.DateTime(0)
+  todos      todos    @relation(fields: [toDoId], references: [id], onDelete: Cascade, map: "tags_todo_foreign")
+  tags       tags     @relation(fields: [tagsId], references: [id], onDelete: Cascade, map: "todos_tag_foreign")
+
+  @@id([toDoId, tagsId])
 }
 
-model Tag {
-  id        String        @id @default(uuid())
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  userId    String
-  name      String
-  toDos     TagsOnToDos[]
-  user      User          @relation(fields: [userId], references: [id])
+model todos {
+  id          Int           @id @default(autoincrement())
+  title       String        @db.VarChar(255)
+  description String?       @db.VarChar(255)
+  userId      Int
+  createdAt   DateTime      @default(now()) @db.DateTime(0)
+  updatedAt   DateTime      @default(now()) @db.DateTime(0)
+  tagsontodos tagsontodos[]
+  users       users         @relation(fields: [id], references: [id], onDelete: Cascade, map: "todos_user_foreign")
 }
 
-model TagsOnToDos {
-  toDo       ToDo     @relation(fields: [toDoId], references: [id])
-  toDoId     String
-  tag        Tag      @relation(fields: [tagId], references: [id])
-  tagId      String
-  assignedAt DateTime @default(now())
-
-  @@id([toDoId, tagId])
+model users {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(255)
+  username  String   @db.VarChar(255)
+  email     String   @db.VarChar(255)
+  password  String   @db.VarChar(255)
+  phone     String   @db.VarChar(255)
+  address   String   @db.VarChar(255)
+  createdAt DateTime @default(now()) @db.DateTime(0)
+  updatedAt DateTime @default(now()) @db.DateTime(0)
+  tags      tags?
+  todos     todos?
 }

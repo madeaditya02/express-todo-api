@@ -29,7 +29,7 @@ export const register = async (req: Request, res: Response) => {
 
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(parsedUser.password, saltRounds);
-    await prisma.user.create({
+    await prisma.users.create({
       data: {
         username: parsedUser.username,
         password: hashedPassword,
@@ -61,7 +61,7 @@ export const register = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
   const { username, password } = req.body
   try {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findFirst({
       where: {
         username: username,
       },

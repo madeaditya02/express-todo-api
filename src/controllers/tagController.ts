@@ -11,10 +11,10 @@ const tagIdSchema = z.string().uuid();
 
 export const showUserTags = async (req: RequestWithUser, res: Response) => {
   try {
-    const result = await prisma.tag.findMany({
+    const result = await prisma.tags.findMany({
       where: {
-        userId: req.user!.id,
-        id: req.params.id
+        userId: parseInt(req.user!.id),
+        id: parseInt(req.params.id)
       }
     });
     res.status(200).json(result);
@@ -30,9 +30,9 @@ export const createTag = async (req: RequestWithUser, res: Response) => {
       name: name
     });
     // Check if current user has same tag
-    const sameTag = await prisma.tag.findFirst({
+    const sameTag = await prisma.tags.findFirst({
       where: {
-        userId: req.user!.id,
+        userId: parseInt(req.user!.id),
         name: parsedBody.name
       }
     });
@@ -40,9 +40,9 @@ export const createTag = async (req: RequestWithUser, res: Response) => {
       res.status(400).json({ message: "The same tag name already exist" });
       return;
     }
-    await prisma.tag.create({
+    await prisma.tags.create({
       data: {
-        userId: req.user!.id,
+        userId: parseInt(req.user!.id),
         name: parsedBody.name,
       }
     });
@@ -59,17 +59,17 @@ export const createTag = async (req: RequestWithUser, res: Response) => {
 export const editTag = async (req: RequestWithUser, res: Response) => {
   try {
     const { name } = req.body;
-    const { tagId } = req.params;
-
+    let { tagId } = req.params;
+    
     const parsedBody = tagSchema.parse({
       name: name
     });
     tagIdSchema.parse(tagId);
 
     // Check if current user has same tag
-    const sameTag = await prisma.tag.findFirst({
+    const sameTag = await prisma.tags.findFirst({
       where: {
-        userId: req.user!.id,
+        userId: parseInt(req.user!.id),
         name: parsedBody.name
       }
     });
@@ -78,18 +78,18 @@ export const editTag = async (req: RequestWithUser, res: Response) => {
     }
 
     // Check if selected tag belongs to the user
-    const userTag = await prisma.tag.findUnique({
+    const userTag = await prisma.tags.findUnique({
       where: {
-        id: tagId
+        id: parseInt(tagId)
       }
     });
-    if (userTag?.userId != req.user!.id) {
+    if (userTag?.userId != parseInt(req.user!.id)) {
       return res.status(404).json({ message: "User don't have tag with selected id" });
     }
 
-    await prisma.tag.update({
+    await prisma.tags.update({
       where: {
-        id: tagId
+        id: parseInt(tagId)
       },
       data: {
         name: parsedBody.name
@@ -114,18 +114,18 @@ export const deleteTag = async (req: RequestWithUser, res: Response) => {
     tagIdSchema.parse(tagId);
 
     // Check if selected tag belongs to the user
-    const userTag = await prisma.tag.findUnique({
+    const userTag = await prisma.tags.findUnique({
       where: {
-        id: tagId
+        id: parseInt(tagId)
       }
     });
-    if (userTag?.userId != req.user!.id) {
+    if (userTag?.userId != parseInt(req.user!.id)) {
       return res.status(404).json({ message: "User don't have tag with selected id" });
     }
 
-    const result = await prisma.tag.delete({
+    const result = await prisma.tags.delete({
       where: {
-        id: tagId
+        id: parseInt(tagId)
       }
     });
 
