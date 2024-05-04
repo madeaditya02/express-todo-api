@@ -1,5 +1,7 @@
 import express, { Request, Response } from "express";
 import * as dotenv from "dotenv";
+import cors, { CorsOptions } from 'cors';
+
 //Routes
 import authRoute from "./routes/auth.route";
 import toDoRoute from "./routes/toDo.route";
@@ -8,8 +10,13 @@ import tagRoute from "./routes/tag.route";
 dotenv.config();
 const app = express();
 
+const corsOptions: CorsOptions = {
+  origin: ['http://localhost:3000','http://localhost:5173']
+}
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cors(corsOptions));
 
 app.use("/auth", authRoute);
 app.use("/todo", toDoRoute);
