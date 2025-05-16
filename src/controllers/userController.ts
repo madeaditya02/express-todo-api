@@ -4,6 +4,8 @@ import * as bcrypt from "bcrypt";
 import { z } from "zod";
 import { generateTokens } from "../utils/jwt";
 import validator from "validator";
+import { Token } from "../entity/user.entity";
+import * as jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
 
@@ -100,3 +102,17 @@ export const login = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Something went wrong..." });
   }
 };
+
+export const user = (req: Request, res: Response) => {
+  if (req.headers.authorization) {
+    const token = req.headers.authorization.split(" ")[1];
+    const verifyToken = jwt.verify(
+      token,
+      process.env.ACCESS_TOKEN_SECRET as string
+    ) as Token;
+    const user = verifyToken.payload;
+    res.json(user);
+  } else {
+    res.status(401).json({ message: "Unauthorized" });
+  }
+}

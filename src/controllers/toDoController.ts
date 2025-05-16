@@ -12,7 +12,7 @@ const IdSchema = z.number();
 const prisma = new PrismaClient();
 
 export const getToDos = async (req: RequestWithUser, res: Response) => {
-  const userId = parseInt(req.user!.id); 
+  const userId = parseInt(req.user!.id);
   try {
     const toDos = await prisma.todos.findMany({
       where: {
@@ -31,9 +31,9 @@ export const getToDos = async (req: RequestWithUser, res: Response) => {
   }
 };
 
-export const createToDo = async (req: RequestWithUser, res: Response) => {  
+export const createToDo = async (req: RequestWithUser, res: Response) => {
   try {
-    const userId = parseInt(req.user!.id); 
+    const userId = parseInt(req.user!.id);
     let { title, description, tags } = req.body
     if (tags == undefined) {
       tags = [];
@@ -94,33 +94,33 @@ export const createToDo = async (req: RequestWithUser, res: Response) => {
 
 export const editToDo = async (req: RequestWithUser, res: Response) => {
   try {
-    let { tags, title, description } = req.body;
+    let { title, description, tags } = req.body;
 
     toDoSchema.parse({
       title: title,
       description: description,
-      tags: tags
+      tags: tags ?? []
     });
-    IdSchema.parse(req.params.id);
+    IdSchema.parse(parseInt(req.params.toDoId));
 
 
-    const tagIdList = tags.map((tagId: string) => {
-      return {
-        id: tagId
-      }
-    });
+    // const tagIdList = tags.map((tagId: string) => {
+    //   return {
+    //     id: tagId
+    //   }
+    // });
 
     // Check user tags in database
-    const userTags = await prisma.tags.findMany({
-      where: {
-        userId: parseInt(req.user!.id),
-        OR: tagIdList
-      }
-    });
-    // Compare user tags and incoming tags from request
-    if (userTags.length < tags.length) {
-      return res.status(400).json({ message: "User don't have selected tag(s)" });
-    }
+    // const userTags = await prisma.tags.findMany({
+    //   where: {
+    //     userId: parseInt(req.user!.id),
+    //     // OR: tagIdList
+    //   }
+    // });
+    // // Compare user tags and incoming tags from request
+    // if (userTags.length < tags.length) {
+    //   return res.status(400).json({ message: "User don't have selected tag(s)" });
+    // }
 
     await prisma.todos.update({
       where: {
@@ -129,18 +129,18 @@ export const editToDo = async (req: RequestWithUser, res: Response) => {
       data: {
         title: title,
         description: description,
-        tagsontodos: {
-          deleteMany: {},
-          create: tags.map((tagId: string) => {
-            return {
-              tag: {
-                connect: {
-                  id: tagId
-                }
-              }
-            }
-          })
-        }
+        // tagsontodos: {
+        //   deleteMany: {},
+        //   create: tags.map((tagId: string) => {
+        //     return {
+        //       tag: {
+        //         connect: {
+        //           id: tagId
+        //         }
+        //       }
+        //     }
+        //   })
+        // }
       },
     });
 
@@ -163,7 +163,7 @@ export const editToDo = async (req: RequestWithUser, res: Response) => {
 
 export const deleteToDo = async (req: RequestWithUser, res: Response) => {
   try {
-    IdSchema.parse(req.params.id);
+    IdSchema.parse(parseInt(req.params.toDoId));
     const userId = parseInt(req.user!.id);
 
     // Check to do's user id and request user id
