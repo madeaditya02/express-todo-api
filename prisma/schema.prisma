@@ -44,8 +44,6 @@ model users {
   username  String   @db.VarChar(255)
   email     String   @db.VarChar(255)
   password  String   @db.VarChar(255)
-  phone     String   @db.VarChar(255)
-  address   String   @db.VarChar(255)
   createdAt DateTime @default(now()) @db.DateTime(0)
   updatedAt DateTime @default(now()) @db.DateTime(0)
   tags      tags?

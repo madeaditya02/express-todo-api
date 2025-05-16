@@ -15,18 +15,14 @@ const userSchema = z.object({
   name: z.string(),
   email: z.string().refine(validator.isEmail, {
     message: "Please provide a valid email address!"
-  }),
-  address: z.string(),
-  phone: z.string().refine(validator.isMobilePhone, {
-    message: "Please provide a valid phone number!"
   })
 })
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { username, password, name, email, address, phone } = req.body
+    const { username, password, name, email } = req.body
     const parsedUser = userSchema.parse({
-      username, password, name, email, address, phone
+      username, password, name, email
     })
 
     const saltRounds = 10;
@@ -36,9 +32,7 @@ export const register = async (req: Request, res: Response) => {
         username: parsedUser.username,
         password: hashedPassword,
         name: parsedUser.name,
-        email: parsedUser.email,
-        address: parsedUser.address,
-        phone: parsedUser.phone
+        email: parsedUser.email
       },
     });
     res
