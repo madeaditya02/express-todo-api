@@ -5,8 +5,7 @@ import { z } from "zod";
 
 const toDoSchema = z.object({
   title: z.string(),
-  description: z.string(),
-  tags: z.array(z.string().nullable())
+  date: z.string(),
 });
 const IdSchema = z.number();
 const prisma = new PrismaClient();
@@ -17,15 +16,12 @@ export const getToDos = async (req: RequestWithUser, res: Response) => {
     const toDos = await prisma.todos.findMany({
       where: {
         userId
-      },
-      include: {
-        tagsontodos: { include: { tags: { select: { name: true } } } }
       }
     });
-    const result = toDos.map((toDo) => {
-      return { ...toDo, tags: toDo.tagsontodos.map(tag => tag.tags) }
-    })
-    res.status(200).json(result);
+    // const result = toDos.map((toDo) => {
+    //   return { ...toDo, tags: toDo.tagsontodos.map(tag => tag.tags) }
+    // })
+    res.status(200).json(toDos);
   } catch (err: any) {
     console.log(err.message);
   }
@@ -34,51 +30,18 @@ export const getToDos = async (req: RequestWithUser, res: Response) => {
 export const createToDo = async (req: RequestWithUser, res: Response) => {
   try {
     const userId = parseInt(req.user!.id);
-    let { title, description, tags } = req.body
-    if (tags == undefined) {
-      tags = [];
-    }
+    let { title, date } = req.body
 
     toDoSchema.parse({
       title: title,
-      description: description,
-      tags: tags
+      date: date,
     });
-
-    const tagIdList = tags.map((tagId: string) => {
-      return {
-        id: tagId
-      }
-    })
-
-    // Check user tags in database
-    const userTags = await prisma.tags.findMany({
-      where: {
-        userId,
-        OR: tagIdList
-      }
-    });
-    // Compare user tags and incoming tags from request
-    if (userTags.length < tags.length) {
-      return res.status(400).json({ message: "User don't have selected tag(s)" });
-    }
 
     await prisma.todos.create({
       data: {
         userId,
         title: title,
-        description: description,
-        tagsontodos: {
-          create: tags.map((tagId: string) => {
-            return {
-              tag: {
-                connect: {
-                  id: tagId
-                }
-              }
-            }
-          })
-        }
+        date: new Date(date),
       }
     });
 
@@ -94,12 +57,11 @@ export const createToDo = async (req: RequestWithUser, res: Response) => {
 
 export const editToDo = async (req: RequestWithUser, res: Response) => {
   try {
-    let { title, description, tags } = req.body;
+    let { title, date } = req.body;
 
     toDoSchema.parse({
       title: title,
-      description: description,
-      tags: tags ?? []
+      date: date,
     });
     IdSchema.parse(parseInt(req.params.toDoId));
 
@@ -128,7 +90,7 @@ export const editToDo = async (req: RequestWithUser, res: Response) => {
       },
       data: {
         title: title,
-        description: description,
+        date: new Date(date),
         // tagsontodos: {
         //   deleteMany: {},
         //   create: tags.map((tagId: string) => {
@@ -183,11 +145,6 @@ export const deleteToDo = async (req: RequestWithUser, res: Response) => {
     }
 
     // Delete to do from relation table
-    await prisma.tagsontodos.deleteMany({
-      where: {
-        toDoId: parseInt(req.params.toDoId)
-      }
-    })
     await prisma.todos.delete({
       where: {
         id: parseInt(req.params.toDoId),

@@ -7,35 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model tags {
-  id          Int           @id @default(autoincrement())
-  userId      Int
-  name        String        @db.VarChar(255)
-  createdAt   DateTime      @default(now()) @db.DateTime(0)
-  updatedAt   DateTime      @default(now()) @db.DateTime(0)
-  users       users         @relation(fields: [id], references: [id], onDelete: Cascade, map: "tags_user_foreign")
-  tagsontodos tagsontodos[]
-}
-
-model tagsontodos {
-  toDoId     Int
-  tagsId     Int
-  assignedAt DateTime @default(now()) @db.DateTime(0)
-  todos      todos    @relation(fields: [toDoId], references: [id], onDelete: Cascade, map: "tags_todo_foreign")
-  tags       tags     @relation(fields: [tagsId], references: [id], onDelete: Cascade, map: "todos_tag_foreign")
-
-  @@id([toDoId, tagsId])
-}
-
 model todos {
   id          Int           @id @default(autoincrement())
   title       String        @db.VarChar(255)
-  description String?       @db.VarChar(255)
+  date        DateTime
   userId      Int
   createdAt   DateTime      @default(now()) @db.DateTime(0)
   updatedAt   DateTime      @default(now()) @db.DateTime(0)
-  tagsontodos tagsontodos[]
-  users       users         @relation(fields: [id], references: [id], onDelete: Cascade, map: "todos_user_foreign")
+  users       users         @relation(fields: [userId], references: [id], onDelete: Cascade, map: "todos_user_foreign")
 }
 
 model users {
@@ -46,6 +25,5 @@ model users {
   password  String   @db.VarChar(255)
   createdAt DateTime @default(now()) @db.DateTime(0)
   updatedAt DateTime @default(now()) @db.DateTime(0)
-  tags      tags?
-  todos     todos?
+  todos     todos[]
 }

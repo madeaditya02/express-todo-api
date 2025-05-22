@@ -5,13 +5,12 @@ import cors, { CorsOptions } from 'cors';
 //Routes
 import authRoute from "./routes/auth.route";
 import toDoRoute from "./routes/toDo.route";
-import tagRoute from "./routes/tag.route";
 
 dotenv.config();
 const app = express();
 
 const corsOptions: CorsOptions = {
-  origin: ['http://localhost:3000','http://localhost:5173']
+  origin: ['http://localhost:3000', 'http://localhost:5173']
 }
 
 app.use(express.json());
@@ -20,7 +19,6 @@ app.use(cors(corsOptions));
 
 app.use("/auth", authRoute);
 app.use("/todo", toDoRoute);
-app.use("/tag", tagRoute);
 
 app.use((req: Request, res: Response) => {
   res.sendStatus(404);
